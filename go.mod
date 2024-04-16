@@ -1,4 +1,4 @@
-module github.com/thePurpleMonkey/music-league-backend
+module github.com/thePurpleMonkey/music-league-stats-server
 
 go 1.20
 
