@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/thePurpleMonkey/music-league-stats-server/models"
 )
@@ -16,7 +15,7 @@ func main() {
 	router := gin.Default()
 
 	// Enable CORS middleware
-	router.Use(cors.Default())
+	// router.Use(cors.Default())
 
 	group := router.Group("/v1")
 	{
