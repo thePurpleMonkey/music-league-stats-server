@@ -18,7 +18,7 @@ func main() {
 	// Enable CORS middleware
 	router.Use(cors.Default())
 
-	group := router.Group("/api")
+	group := router.Group("/v1")
 	{
 		group.GET("leagues", getLeagues)
 		// group.GET("leagues/:league_id", getLeagueById)
