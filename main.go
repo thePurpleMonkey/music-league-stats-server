@@ -14,9 +14,6 @@ func main() {
 
 	router := gin.Default()
 
-	// Enable CORS middleware
-	// router.Use(cors.Default())
-
 	group := router.Group("/v1")
 	{
 		group.GET("leagues", getLeagues)
