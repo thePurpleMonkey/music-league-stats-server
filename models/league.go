@@ -151,6 +151,58 @@ func GetRounds(leagueId string) ([]Round, error) {
 	return rounds, err
 }
 
+func GetAllMembers() ([]Member, error) {
+	rows, err := DB.Query("SELECT id, name, picture FROM members")
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	members := make([]Member, 0)
+
+	for rows.Next() {
+		member := Member{}
+		if err = rows.Scan(&member.Id, &member.Name, &member.Picture); err != nil {
+			return nil, err
+		}
+
+		members = append(members, member)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return members, err
+}
+
+func GetRoundMembers(roundId string) ([]Member, error) {
+	rows, err := DB.Query("SELECT id, name, picture FROM members WHERE id IN (SELECT DISTINCT recipient_id FROM results WHERE round_id = ?)", roundId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	members := make([]Member, 0)
+
+	for rows.Next() {
+		member := Member{}
+		if err = rows.Scan(&member.Id, &member.Name, &member.Picture); err != nil {
+			return nil, err
+		}
+
+		members = append(members, member)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return members, err
+}
+
 func GetMembers(leagueId string) ([]Member, error) {
 	rows, err := DB.Query("SELECT id, name, picture FROM members WHERE id IN (SELECT DISTINCT recipient_id FROM results WHERE league_id = ?)", leagueId)
 	if err != nil {
@@ -512,9 +564,9 @@ func GetSimilarity(roundId string, memberId string) (map[string]float32, error) 
 	memberVotes := listToSet(votes[memberId])
 
 	for voterId, votes := range votes {
-		// if voterId == memberId {
-		// 	continue
-		// }
+		if voterId == memberId {
+			continue // Don't calculate similarity with yourself
+		}
 
 		otherVotes := listToSet(votes)
 		similarities[voterId] = calculateJaccardSimilarity(memberVotes, otherVotes)

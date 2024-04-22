@@ -13,6 +13,7 @@ func main() {
 	checkErr(err)
 
 	router := gin.Default()
+	// router.Use(cors.Default())
 
 	group := router.Group("/v1")
 	{
@@ -27,9 +28,11 @@ func main() {
 
 		group.GET("submissions/:round_id", getSubmissions)
 		group.GET("voters/:round_id", getVotesByVoter)
+		group.GET("members", getAllMembers)
 		group.GET("members/:member_id", getMember)
 		group.GET("rounds/:round_id", getRound)
 		group.GET("rounds/:round_id/rankings", getRoundRankings)
+		group.GET("rounds/:round_id/members", getRoundMembers)
 		group.GET("rounds/:round_id/similarity/:member_id", getSimilarity)
 	}
 
@@ -58,6 +61,31 @@ func getRounds(c *gin.Context) {
 		return
 	} else {
 		c.IndentedJSON(http.StatusOK, rounds)
+	}
+}
+
+func getAllMembers(c *gin.Context) {
+	members, err := models.GetAllMembers()
+	checkErr(err)
+
+	if members == nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "No Records Found"})
+		return
+	} else {
+		c.IndentedJSON(http.StatusOK, members)
+	}
+}
+
+func getRoundMembers(c *gin.Context) {
+	roundId := c.Param("round_id")
+	members, err := models.GetRoundMembers(roundId)
+	checkErr(err)
+
+	if members == nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "No Records Found"})
+		return
+	} else {
+		c.IndentedJSON(http.StatusOK, members)
 	}
 }
 
