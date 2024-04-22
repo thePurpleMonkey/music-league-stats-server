@@ -30,6 +30,7 @@ func main() {
 		group.GET("members/:member_id", getMember)
 		group.GET("rounds/:round_id", getRound)
 		group.GET("rounds/:round_id/rankings", getRoundRankings)
+		group.GET("rounds/:round_id/similarity/:member_id", getSimilarity)
 	}
 
 	router.Run("localhost:4040")
@@ -191,6 +192,20 @@ func getVotesByVoter(c *gin.Context) {
 		return
 	} else {
 		c.IndentedJSON(http.StatusOK, round)
+	}
+}
+
+func getSimilarity(c *gin.Context) {
+	roundId := c.Param("round_id")
+	memberId := c.Param("member_id")
+	similarities, err := models.GetSimilarity(roundId, memberId)
+	checkErr(err)
+
+	if similarities == nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "No Records Found"})
+		return
+	} else {
+		c.IndentedJSON(http.StatusOK, similarities)
 	}
 }
 

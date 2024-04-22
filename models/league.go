@@ -485,3 +485,64 @@ func GetRoundById(roundId string) (Round, error) {
 
 	return round, nil
 }
+
+func GetSimilarity(roundId string, memberId string) (map[string]float32, error) {
+	similarities := make(map[string]float32)
+	votes := make(map[string][]string)
+
+	rows, err := DB.Query("SELECT voter_id, track_id FROM results WHERE round_id = ? AND votes > 0", roundId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var voterId, trackId string
+		if err = rows.Scan(&voterId, &trackId); err != nil {
+			return nil, err
+		}
+
+		votes[voterId] = append(votes[voterId], trackId)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	memberVotes := listToSet(votes[memberId])
+
+	for voterId, votes := range votes {
+		// if voterId == memberId {
+		// 	continue
+		// }
+
+		otherVotes := listToSet(votes)
+		similarities[voterId] = calculateJaccardSimilarity(memberVotes, otherVotes)
+	}
+
+	return similarities, nil
+}
+
+func listToSet(list []string) map[string]bool {
+	set := make(map[string]bool)
+
+	for _, item := range list {
+		set[item] = true
+	}
+
+	return set
+}
+
+// Calculate Jaccard similarity coefficient
+func calculateJaccardSimilarity(votes1, votes2 map[string]bool) float32 {
+	intersection := 0
+	for item := range votes1 {
+		if votes2[item] {
+			intersection++
+		}
+	}
+
+	union := len(votes1) + len(votes2) - intersection
+
+	return float32(intersection) / float32(union)
+}
