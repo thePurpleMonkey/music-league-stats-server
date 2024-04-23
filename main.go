@@ -25,6 +25,7 @@ func main() {
 		group.GET("leagues/:league_id/members/:member_id/votes_given", getVotesGiven)
 		group.GET("leagues/:league_id/members/:member_id/round_standings", getRoundStandings)
 		group.GET("leagues/:league_id/members/:member_id/favorite_songs", getFavoriteSongs)
+		group.GET("leagues/:league_id/similarity/:member_id", getLeagueSimilarity)
 
 		group.GET("submissions/:round_id", getSubmissions)
 		group.GET("voters/:round_id", getVotesByVoter)
@@ -227,6 +228,20 @@ func getSimilarity(c *gin.Context) {
 	roundId := c.Param("round_id")
 	memberId := c.Param("member_id")
 	similarities, err := models.GetSimilarity(roundId, memberId)
+	checkErr(err)
+
+	if similarities == nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "No Records Found"})
+		return
+	} else {
+		c.IndentedJSON(http.StatusOK, similarities)
+	}
+}
+
+func getLeagueSimilarity(c *gin.Context) {
+	leagueId := c.Param("league_id")
+	memberId := c.Param("member_id")
+	similarities, err := models.GetLeagueSimilarity(leagueId, memberId)
 	checkErr(err)
 
 	if similarities == nil {

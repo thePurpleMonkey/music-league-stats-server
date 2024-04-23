@@ -575,6 +575,43 @@ func GetSimilarity(roundId string, memberId string) (map[string]float32, error) 
 	return similarities, nil
 }
 
+func GetLeagueSimilarity(leagueId string, memberId string) (map[string]float32, error) {
+	similarities := make(map[string]float32)
+	votes := make(map[string][]string)
+
+	rows, err := DB.Query("SELECT voter_id, track_id FROM results WHERE league_id = ? AND votes > 0", leagueId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var voterId, trackId string
+		if err = rows.Scan(&voterId, &trackId); err != nil {
+			return nil, err
+		}
+
+		votes[voterId] = append(votes[voterId], trackId)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	memberVotes := listToSet(votes[memberId])
+
+	for voterId, votes := range votes {
+		if voterId == memberId {
+			continue // Don't calculate similarity with yourself
+		}
+
+		otherVotes := listToSet(votes)
+		similarities[voterId] = calculateJaccardSimilarity(memberVotes, otherVotes)
+	}
+
+	return similarities, nil
+}
+
 func listToSet(list []string) map[string]bool {
 	set := make(map[string]bool)
 
