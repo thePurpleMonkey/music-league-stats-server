@@ -542,7 +542,7 @@ func GetSimilarity(roundId string, memberId string) (map[string]float32, error) 
 	similarities := make(map[string]float32)
 	votes := make(map[string][]string)
 
-	rows, err := DB.Query("SELECT voter_id, track_id FROM results WHERE round_id = ? AND votes > 0", roundId)
+	rows, err := DB.Query("SELECT voter_id, track_id FROM results WHERE round_id = ? AND votes > 0 UNION SELECT submitter_id, track_id FROM submissions WHERE round_id = ?", roundId, roundId)
 	if err != nil {
 		return nil, err
 	}
@@ -579,7 +579,7 @@ func GetLeagueSimilarity(leagueId string, memberId string) (map[string]float32, 
 	similarities := make(map[string]float32)
 	votes := make(map[string][]string)
 
-	rows, err := DB.Query("SELECT voter_id, track_id FROM results WHERE league_id = ? AND votes > 0", leagueId)
+	rows, err := DB.Query("SELECT voter_id, track_id FROM results WHERE league_id = ? AND votes > 0 UNION SELECT submitter_id, track_id FROM submissions WHERE league_id = ?", leagueId, leagueId)
 	if err != nil {
 		return nil, err
 	}
