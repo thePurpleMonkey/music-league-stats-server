@@ -38,6 +38,7 @@ type Member struct {
 type Track struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
+	Album     string `json:"album"`
 	Picture   string `json:"picture"`
 	Submitter Member `json:"submitter"`
 }
@@ -365,7 +366,7 @@ func GetRoundRankings(roundId string) ([]Placement, error) {
 }
 
 func GetFavoriteSongs(leagueId string, memberId string) ([]Vote, error) {
-	rows, err := DB.Query("SELECT track_id, name, picture, votes, comment, recipient_id FROM results JOIN track_names ON results.track_id = track_names.id WHERE voter_id = ? AND league_id = ? ORDER BY votes DESC", memberId, leagueId)
+	rows, err := DB.Query("SELECT track_id, name, album, picture, votes, comment, recipient_id FROM results JOIN track_names ON results.track_id = track_names.id WHERE voter_id = ? AND league_id = ? ORDER BY votes DESC", memberId, leagueId)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +385,7 @@ func GetFavoriteSongs(leagueId string, memberId string) ([]Vote, error) {
 			Voter: member,
 		}
 		var submitterId string
-		if err = rows.Scan(&vote.Track.Id, &vote.Track.Name, &vote.Track.Picture, &vote.Votes, &vote.Comment, &submitterId); err != nil {
+		if err = rows.Scan(&vote.Track.Id, &vote.Track.Name, &vote.Track.Album, &vote.Track.Picture, &vote.Votes, &vote.Comment, &submitterId); err != nil {
 			return nil, err
 		}
 		if vote.Track.Submitter, err = GetMemberById(submitterId); err != nil {
@@ -402,7 +403,7 @@ func GetFavoriteSongs(leagueId string, memberId string) ([]Vote, error) {
 }
 
 func GetSubmissions(roundId string) ([]Submission, error) {
-	rows, err := DB.Query("SELECT submitter_id, track_id, name, picture, comment FROM submissions JOIN track_names ON track_id = track_names.id WHERE round_id = ?", roundId)
+	rows, err := DB.Query("SELECT submitter_id, track_id, name, album, picture, comment FROM submissions JOIN track_names ON track_id = track_names.id WHERE round_id = ?", roundId)
 	if err != nil {
 		return nil, err
 	}
@@ -415,7 +416,7 @@ func GetSubmissions(roundId string) ([]Submission, error) {
 		track := Track{}
 
 		var submitterId string
-		if err = rows.Scan(&submitterId, &track.Id, &track.Name, &track.Picture, &submission.Comment); err != nil {
+		if err = rows.Scan(&submitterId, &track.Id, &track.Name, &track.Album, &track.Picture, &submission.Comment); err != nil {
 			return nil, err
 		}
 		submission.Track = track
@@ -443,7 +444,7 @@ func GetSubmissions(roundId string) ([]Submission, error) {
 }
 
 func GetVotesBySubmission(roundId string, submitterId string) ([]Vote, error) {
-	rows, err := DB.Query("SELECT voter_id, votes, track_id, name, picture, comment FROM results JOIN track_names ON track_id = id WHERE round_id = ? AND recipient_id = ?", roundId, submitterId)
+	rows, err := DB.Query("SELECT voter_id, votes, track_id, name, album, picture, comment FROM results JOIN track_names ON track_id = id WHERE round_id = ? AND recipient_id = ?", roundId, submitterId)
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +456,7 @@ func GetVotesBySubmission(roundId string, submitterId string) ([]Vote, error) {
 	for rows.Next() {
 		vote := Vote{}
 		var voterId string
-		if err = rows.Scan(&voterId, &vote.Votes, &vote.Track.Id, &vote.Track.Name, &vote.Track.Picture, &vote.Comment); err != nil {
+		if err = rows.Scan(&voterId, &vote.Votes, &vote.Track.Id, &vote.Track.Name, &vote.Track.Album, &vote.Track.Picture, &vote.Comment); err != nil {
 			return nil, err
 		}
 		if vote.Voter, err = GetMemberById(voterId); err != nil {
@@ -473,7 +474,7 @@ func GetVotesBySubmission(roundId string, submitterId string) ([]Vote, error) {
 }
 
 func GetVotesByRound(roundId string) ([]Vote, error) {
-	rows, err := DB.Query("SELECT voter_id, votes, track_id, name, picture, comment FROM results JOIN track_names ON track_id = id WHERE round_id = ?", roundId)
+	rows, err := DB.Query("SELECT voter_id, votes, track_id, name, album, picture, comment FROM results JOIN track_names ON track_id = id WHERE round_id = ?", roundId)
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +486,7 @@ func GetVotesByRound(roundId string) ([]Vote, error) {
 	for rows.Next() {
 		vote := Vote{}
 		var voterId string
-		if err = rows.Scan(&voterId, &vote.Votes, &vote.Track.Id, &vote.Track.Name, &vote.Track.Picture, &vote.Comment); err != nil {
+		if err = rows.Scan(&voterId, &vote.Votes, &vote.Track.Id, &vote.Track.Name, &vote.Track.Album, &vote.Track.Picture, &vote.Comment); err != nil {
 			return nil, err
 		}
 		if vote.Voter, err = GetMemberById(voterId); err != nil {
@@ -503,7 +504,7 @@ func GetVotesByRound(roundId string) ([]Vote, error) {
 }
 
 func GetVotesByVoter(roundId string) ([]VotesGiven, error) {
-	rows, err := DB.Query("SELECT voter_id, recipient_id, votes, track_id, name, picture, comment FROM results JOIN track_names ON track_id = track_names.id WHERE round_id = ?", roundId)
+	rows, err := DB.Query("SELECT voter_id, recipient_id, votes, track_id, name, album, picture, comment FROM results JOIN track_names ON track_id = track_names.id WHERE round_id = ?", roundId)
 	if err != nil {
 		return nil, err
 	}
@@ -517,7 +518,7 @@ func GetVotesByVoter(roundId string) ([]VotesGiven, error) {
 		vote := Vote{}
 
 		var voterId, submitterId string
-		if err = rows.Scan(&voterId, &submitterId, &vote.Votes, &track.Id, &track.Name, &track.Picture, &vote.Comment); err != nil {
+		if err = rows.Scan(&voterId, &submitterId, &vote.Votes, &track.Id, &track.Name, &track.Album, &track.Picture, &vote.Comment); err != nil {
 			return nil, err
 		}
 		vote.Track = track
