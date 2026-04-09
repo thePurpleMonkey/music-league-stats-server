@@ -36,11 +36,12 @@ type Member struct {
 }
 
 type Track struct {
-	Id        string `json:"id"`
-	Name      string `json:"name"`
-	Album     string `json:"album"`
-	Picture   string `json:"picture"`
-	Submitter Member `json:"submitter"`
+	Id        string   `json:"id"`
+	Name      string   `json:"name"`
+	Album     string   `json:"album"`
+	Picture   string   `json:"picture"`
+	Submitter Member   `json:"submitter"`
+	Artists   []Artist `json:"artists"`
 }
 
 type Vote struct {
@@ -69,6 +70,13 @@ type Placement struct {
 	Votes     int    `json:"votes"`
 	Placement int    `json:"placement"`
 	Round     Round  `json:"round"`
+}
+
+type Artist struct {
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	Popularity int    `json:"popularity"`
+	Followers  int    `json:"followers"`
 }
 
 func GetLeagues() ([]League, error) {
@@ -392,6 +400,10 @@ func GetFavoriteSongs(leagueId string, memberId string) ([]Vote, error) {
 			return nil, err
 		}
 
+		if vote.Track.Artists, err = GetTrackArtists(vote.Track.Id); err != nil {
+			return nil, err
+		}
+
 		votes = append(votes, vote)
 	}
 
@@ -430,6 +442,10 @@ func GetSubmissions(roundId string) ([]Submission, error) {
 			return nil, err
 		}
 
+		if track.Artists, err = GetTrackArtists(track.Id); err != nil {
+			return nil, err
+		}
+
 		submission.Votes = votes
 		submissions = append(submissions, submission)
 	}
@@ -463,6 +479,10 @@ func GetVotesBySubmission(roundId string, submitterId string) ([]Vote, error) {
 			return nil, err
 		}
 
+		if vote.Track.Artists, err = GetTrackArtists(vote.Track.Id); err != nil {
+			return nil, err
+		}
+
 		votes = append(votes, vote)
 	}
 
@@ -490,6 +510,10 @@ func GetVotesByRound(roundId string) ([]Vote, error) {
 			return nil, err
 		}
 		if vote.Voter, err = GetMemberById(voterId); err != nil {
+			return nil, err
+		}
+
+		if vote.Track.Artists, err = GetTrackArtists(vote.Track.Id); err != nil {
 			return nil, err
 		}
 
@@ -521,6 +545,11 @@ func GetVotesByVoter(roundId string) ([]VotesGiven, error) {
 		if err = rows.Scan(&voterId, &submitterId, &vote.Votes, &track.Id, &track.Name, &track.Album, &track.Picture, &vote.Comment); err != nil {
 			return nil, err
 		}
+
+		if track.Artists, err = GetTrackArtists(track.Id); err != nil {
+			return nil, err
+		}
+
 		vote.Track = track
 		if track.Submitter, err = GetMemberById(submitterId); err != nil {
 			return nil, err
@@ -687,4 +716,33 @@ func calculateJaccardSimilarity(votes1, votes2 map[string]bool) float32 {
 	union := len(votes1) + len(votes2) - intersection
 
 	return float32(intersection) / float32(union)
+}
+
+func GetTrackArtists(trackId string) ([]Artist, error) {
+	rows, err := DB.Query("SELECT id, name, popularity, followers FROM artist JOIN track_artists ON track_artists.artist_id = artist.id WHERE track_id = ? ", trackId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	artists := make([]Artist, 0)
+
+	for rows.Next() {
+		artist := Artist{}
+		err = rows.Scan(&artist.Id, &artist.Name, &artist.Popularity, &artist.Followers)
+
+		if err != nil {
+			return nil, err
+		}
+
+		artists = append(artists, artist)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return artists, nil
 }
